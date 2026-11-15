@@ -21,6 +21,12 @@ function broadcastRoomState(room) {
 
 function sendFullState(socket, room, playerId) {
   const p = room.players.find(pl => pl.playerId === playerId);
+  if (!socket || !socket.connected) {
+    // socket guardado morreu (host recarregou a pagina): procura o socket vivo
+    const vivo = [...io.sockets.sockets.values()].find(s => s.data && s.data.playerId === playerId);
+    if (vivo) socket = vivo;
+  }
+  if (!socket) return;
   socket.emit('game-start', {
     yourCards: p ? p.cards : [],
     state: game.publicState(room),
@@ -346,6 +352,7 @@ io.on('connection', (socket) => {
         || room.players.find(pl => pl.name === name);
       if (p) {
         p.socket = socket;
+        socket.data.playerId = p.playerId;
         socket.join(room.code);
         cb({ ok: true, playerId: p.playerId, started: true });
         sendFullState(socket, room, p.playerId);
@@ -368,6 +375,7 @@ io.on('connection', (socket) => {
     }
     p.name = name || p.name;
     p.socket = socket;
+    socket.data.playerId = p.playerId;
     // bots nunca viram host: o primeiro humano que entrar comanda
     const isBot = p.playerId.startsWith('bot-');
     if (!room.host && !isBot) room.host = p.playerId;
