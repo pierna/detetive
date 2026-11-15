@@ -124,10 +124,10 @@ function wireSocket(sock) {
     if (r.to !== playerId) return;
     const s = r.suggestion;
     document.getElementById('refute-text').textContent =
-      `${s.suggesterName} sugeriu ${nameOf('suspeito', s.suspect)} com ${nameOf('arma', s.weapon)}. Escolha uma carta para mostrar:`;
+      `${s.suggesterName} sugeriu ${nameOf('suspeito', s.suspect)} com ${nameOf('arma', s.weapon)}, em ${nameOf('sala', s.room)}. Escolha uma carta para mostrar:`;
     const box = document.getElementById('refute-cards');
     box.innerHTML = '';
-    const matches = myCards.filter(c => c.id === s.suspect || c.id === s.weapon);
+    const matches = myCards.filter(c => c.id === s.suspect || c.id === s.weapon || c.id === s.room);
     matches.forEach((c) => {
       const btn = document.createElement('div');
       btn.className = 'playing-card type-' + c.type + ' clickable';

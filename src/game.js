@@ -127,15 +127,17 @@ function cardsFor(room, playerId) {
 }
 
 // retorna o primeiro jogador (em ordem de turno após o sugeridor) que tem uma das cartas
-function findRefuter(room, fromIndex, suspect, weapon) {
+function findRefuter(room, fromIndex, suspect, weapon, roomId) {
   const n = room.players.length;
   // i < n: nunca volta ao proprio sugeridor (i === n seria ele mesmo)
   for (let i = 1; i < n; i++) {
     const p = room.players[(fromIndex + i) % n];
     if (p.eliminated) continue;
+    // o palpite nomeia tres cartas: suspeito, arma e a sala
     const card = p.cards.find(c =>
       (c.type === 'suspeito' && c.id === suspect) ||
-      (c.type === 'arma' && c.id === weapon)
+      (c.type === 'arma' && c.id === weapon) ||
+      (c.type === 'sala' && c.id === roomId)
     );
     if (card) return { player: p, card };
   }

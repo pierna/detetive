@@ -144,7 +144,7 @@ function runBotTurn(room) {
         const suspect = pick(free(BOT_SUSPECTS));
         const weapon = pick(free(BOT_WEAPONS));
         room.pendingSuggestion = { suggesterId: bot.playerId, suggesterName: bot.name, suspect, weapon, room: target.room };
-        const hit = game.findRefuter(room, room.turnIndex, suspect, weapon);
+        const hit = game.findRefuter(room, room.turnIndex, suspect, weapon, target.room);
         if (hit) {
           askRefute(room, hit, room.pendingSuggestion);
         } else {
@@ -439,7 +439,7 @@ io.on('connection', (socket) => {
       suggesterName: p.name,
       suspect, weapon, room: roomId
     };
-    const hit = game.findRefuter(gameRoom, idx, suspect, weapon);
+    const hit = game.findRefuter(gameRoom, idx, suspect, weapon, roomId);
     if (hit) {
       askRefute(gameRoom, hit, gameRoom.pendingSuggestion);
     } else {
