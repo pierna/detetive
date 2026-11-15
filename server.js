@@ -64,7 +64,7 @@ function botDeduce(room, bot) {
 function runBotTurn(room) {
   if (!room.started || room.winner) return;
   const bot = room.players[room.turnIndex];
-  if (!bot || !bot.isBot) return;
+  if (!bot || !bot.isBot || bot.eliminated) return;
   if (room.phase !== 'turn' || room.dice !== null) return;
 
   // 0) acusar: deducao exata quando possivel; senao, chance crescente (garante fim de jogo)
@@ -110,6 +110,7 @@ function runBotTurn(room) {
     game.nextTurn(room);
     io.to(room.code).emit('turn-changed', game.publicState(room));
     scheduleBot(room);
+    notifyRoomStart(room);
     return;
   }
 
@@ -144,6 +145,7 @@ function runBotTurn(room) {
         const suspect = pick(free(BOT_SUSPECTS));
         const weapon = pick(free(BOT_WEAPONS));
         room.pendingSuggestion = { suggesterId: bot.playerId, suggesterName: bot.name, suspect, weapon, room: target.room };
+        moveSuspectToRoom(room, suspect, target.room);
         const hit = game.findRefuter(room, room.turnIndex, suspect, weapon, target.room);
         if (hit) {
           askRefute(room, hit, room.pendingSuggestion);
@@ -155,12 +157,14 @@ function runBotTurn(room) {
           game.nextTurn(room);
           io.to(room.code).emit('turn-changed', game.publicState(room));
           scheduleBot(room);
+          notifyRoomStart(room);
         }
       }, 1200);
     } else {
       game.nextTurn(room);
       io.to(room.code).emit('turn-changed', game.publicState(room));
       scheduleBot(room);
+      notifyRoomStart(room);
     }
   }, 1000);
 }
@@ -178,6 +182,46 @@ function checkLastStanding(room) {
     return true;
   }
   return false;
+}
+
+// quem comeca o turno dentro de uma sala pode palpitar sem rolar o dado
+function notifyRoomStart(room) {
+  const p = room.players[room.turnIndex];
+  if (!p || !p.position || !p.position.room) return;
+  io.to(room.code).emit('can-suggest', { playerId: p.playerId, room: p.position.room, noRoll: true });
+  // bots tambem aproveitam
+  if (p.isBot && room.phase === 'turn' && room.dice === null) {
+    setTimeout(() => {
+      if (room.phase !== 'turn' || room.dice !== null || room.winner) return;
+      const cur = room.players[room.turnIndex];
+      if (!cur || cur.playerId !== p.playerId) return;
+      const free = (arr) => { const f = arr.filter(x => !cur.cards.some(c => c.id === x)); return f.length ? f : arr; };
+      const suspect = pick(free(BOT_SUSPECTS));
+      const weapon = pick(free(BOT_WEAPONS));
+      room.pendingSuggestion = { suggesterId: cur.playerId, suggesterName: cur.name, suspect, weapon, room: cur.position.room };
+      moveSuspectToRoom(room, suspect, cur.position.room);
+      const hit = game.findRefuter(room, room.turnIndex, suspect, weapon, cur.position.room);
+      if (hit) askRefute(room, hit, room.pendingSuggestion);
+      else {
+        io.to(room.code).emit('suggestion-result', { suggester: cur.name, suspect, weapon, room: cur.position.room, shown: null, shownTo: null });
+        room.pendingSuggestion = null;
+        game.nextTurn(room);
+        io.to(room.code).emit('turn-changed', game.publicState(room));
+        scheduleBot(room);
+        notifyRoomStart(room);
+      }
+    }, 1500);
+  }
+}
+
+// o suspeito citado no palpite vai para a sala do palpite (regra do Clue)
+function moveSuspectToRoom(room, suspectId, roomId) {
+  const alvo = room.players.find(p => p.character === suspectId);
+  if (!alvo) return null;
+  const antes = alvo.position;
+  alvo.position = { room: roomId };
+  if (antes) io.to(room.code).emit('player-moved', { playerId: alvo.playerId, position: alvo.position });
+  return alvo;
 }
 
 // pede refutacao a um jogador; bots respondem sozinhos, humanos tem tempo limite
@@ -246,6 +290,7 @@ function finishRefute(room, refuter, card) {
   game.nextTurn(room);
   io.to(room.code).emit('turn-changed', game.publicState(room));
   scheduleBot(room);
+  notifyRoomStart(room);
 }
 
 // agenda a jogada do bot da vez (se houver)
@@ -381,6 +426,7 @@ io.on('connection', (socket) => {
     io.to(room.code).emit('game-started', {});
     io.to(room.code).emit('turn-changed', game.publicState(room));
     scheduleBot(room);
+    notifyRoomStart(room);
   });
 
   socket.on('roll-dice', ({ code, playerId }, cb) => {
@@ -388,6 +434,7 @@ io.on('connection', (socket) => {
     if (!room || room.phase !== 'turn') return;
     const p = room.players[room.turnIndex];
     if (p.playerId !== playerId) return cb && cb({ error: 'Nao e sua vez' });
+    if (p.eliminated) return cb && cb({ error: 'Voce errou a acusacao e nao pode mais jogar' });
     if (room.dice !== null) return cb && cb({ error: 'Dado ja rolado' });
     const dice = Math.floor(Math.random() * 6) + 1;
     room.dice = dice;
@@ -424,6 +471,7 @@ io.on('connection', (socket) => {
       game.nextTurn(room);
       io.to(room.code).emit('turn-changed', game.publicState(room));
       scheduleBot(room);
+      notifyRoomStart(room);
     }
     cb && cb({ ok: true });
   });
@@ -433,12 +481,13 @@ io.on('connection', (socket) => {
     if (!gameRoom || !gameRoom.started || gameRoom.phase !== 'turn') return;
     const idx = gameRoom.turnIndex;
     const p = gameRoom.players[idx];
-    if (p.playerId !== playerId) return;
+    if (p.playerId !== playerId || p.eliminated) return;
     gameRoom.pendingSuggestion = {
       suggesterId: playerId,
       suggesterName: p.name,
       suspect, weapon, room: roomId
     };
+    moveSuspectToRoom(gameRoom, suspect, roomId);
     const hit = game.findRefuter(gameRoom, idx, suspect, weapon, roomId);
     if (hit) {
       askRefute(gameRoom, hit, gameRoom.pendingSuggestion);
@@ -495,6 +544,7 @@ io.on('connection', (socket) => {
         game.nextTurn(room);
         io.to(room.code).emit('turn-changed', game.publicState(room));
         scheduleBot(room);
+        notifyRoomStart(room);
       }
     }
     cb && cb({ ok: true });
@@ -518,6 +568,7 @@ io.on('connection', (socket) => {
     game.nextTurn(room);
     io.to(room.code).emit('turn-changed', game.publicState(room));
     scheduleBot(room);
+    notifyRoomStart(room);
     cb && cb({ ok: true });
   });
 

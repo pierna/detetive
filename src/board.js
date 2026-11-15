@@ -61,9 +61,7 @@ function doorCells() {
 // Passagens secretas: pares de salas conectadas diretamente (cantos opostos)
 const SECRET_PASSAGES = [
   { a: 'cozinha',    b: 'jantar' },     // canto noroeste <-> nordeste
-  { a: 'estar',      b: 'adega' },      // canto oeste <-> sudeste
-  { a: 'musica',     b: 'hall' },       // norte <-> sul
-  { a: 'biblioteca', b: 'lounge' }      // sudoeste <-> leste
+  { a: 'biblioteca', b: 'adega' }       // canto sudoeste <-> sudeste
 ];
 
 // Retorna as células alcançáveis a partir de uma posição, com até `steps` passos.

@@ -92,6 +92,10 @@ function wireSocket(sock) {
     if (d.playerId === playerId) {
       canSuggestNow = true;
       currentRoom = d.room;
+      // sem rolar o dado: tambem libera "Passar Vez"
+      if (d.noRoll) {
+        document.getElementById('btn-endturn').classList.remove('hidden');
+      }
       document.getElementById('btn-suggest').classList.remove('hidden');
     }
   });
@@ -363,7 +367,7 @@ function renderState() {
   const outBanner = document.getElementById('out-banner');
   if (outBanner) outBanner.classList.toggle('hidden', !iAmOut);
 
-  document.getElementById('btn-roll').disabled = !(isMyTurn && state.phase === 'turn' && state.dice === null);
+  document.getElementById('btn-roll').disabled = !(isMyTurn && !iAmOut && state.phase === 'turn' && state.dice === null);
   document.getElementById('btn-accuse').disabled = !(isMyTurn && !me.eliminated);
   document.getElementById('btn-endturn').classList.toggle('hidden', !(isMyTurn && state.phase === 'turn' && state.dice !== null));
 
