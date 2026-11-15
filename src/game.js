@@ -132,7 +132,9 @@ function findRefuter(room, fromIndex, suspect, weapon, roomId) {
   // i < n: nunca volta ao proprio sugeridor (i === n seria ele mesmo)
   for (let i = 1; i < n; i++) {
     const p = room.players[(fromIndex + i) % n];
-    if (p.eliminated) continue;
+    // eliminado CONTINUA refutando: no Clue ele so perde o direito de se mover,
+    // palpitar e acusar. Pular ele faz o sugeridor concluir errado que a carta
+    // esta no envelope.
     // o palpite nomeia tres cartas: suspeito, arma e a sala
     const card = p.cards.find(c =>
       (c.type === 'suspeito' && c.id === suspect) ||

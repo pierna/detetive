@@ -247,7 +247,7 @@ function askRefute(room, hit, suggestion) {
   if (hit.player.isBot) {
     setTimeout(() => {
       if (room.phase !== 'refute' || !room.refuteQueue.includes(pid)) return;
-      const card = hit.player.cards.find(c => c.id === suggestion.suspect || c.id === suggestion.weapon) || null;
+      const card = hit.player.cards.find(c => c.id === suggestion.suspect || c.id === suggestion.weapon || c.id === suggestion.room) || null;
       if (room.refuteTimer) clearTimeout(room.refuteTimer);
       finishRefute(room, hit.player, card);
     }, 1200);
