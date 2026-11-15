@@ -264,31 +264,53 @@ const CHAR_COLORS = {
   peacock: '#5aa8d6', plum: '#9b59b6', green: '#4caf50'
 };
 
+// reaproveita os elementos das fichas entre renders (evita recriar SVG a cada evento)
 function renderPieces() {
-  document.querySelectorAll('.piece').forEach(p => p.remove());
   if (!state) return;
   const boardEl = document.getElementById('board');
+  const vistos = new Set();
+
   state.players.forEach((p) => {
     if (!p.position) return;
-    const piece = document.createElement('div');
-    piece.className = 'piece';
-    piece.dataset.pid = p.playerId;
-    piece.style.background = CHAR_PIECE_BG[p.character] || '#777';
-    piece.innerHTML = (CHAR_ART[p.character] || '') +
-      `<span class="piece-tag">${p.name}</span>`;
-    piece.title = p.name;
+    vistos.add(p.playerId);
+
+    let piece = boardEl.querySelector(`.piece[data-pid="${p.playerId}"]`);
+    if (!piece) {
+      piece = document.createElement('div');
+      piece.className = 'piece';
+      piece.dataset.pid = p.playerId;
+      piece.style.background = CHAR_PIECE_BG[p.character] || '#777';
+      piece.innerHTML = (CHAR_ART[p.character] || '') +
+        `<span class="piece-tag">${p.name}</span>`;
+      piece.title = p.name;
+      boardEl.appendChild(piece);
+    }
+
+    let area;
     if (p.position.room) {
       const room = ROOMS[p.position.room];
-      // posiciona dentro da sala em slots
       const idx = state.players.filter(o => o.position && o.position.room === p.position.room).indexOf(p);
       const cx = room.rect.x + room.rect.w / 2 - 0.5;
       const cy = room.rect.y + 1 + idx * 0.9;
-      piece.style.gridArea = `${Math.floor(cy) + 1} / ${Math.floor(cx) + 1}`;
+      area = `${Math.floor(cy) + 1} / ${Math.floor(cx) + 1}`;
     } else {
-      piece.style.gridArea = `${p.position.y + 1} / ${p.position.x + 1}`;
+      area = `${p.position.y + 1} / ${p.position.x + 1}`;
     }
-    boardEl.appendChild(piece);
+    if (piece.style.gridArea !== area) piece.style.gridArea = area;
   });
+
+  // remove fichas de quem saiu
+  boardEl.querySelectorAll('.piece').forEach(el => {
+    if (!vistos.has(el.dataset.pid)) el.remove();
+  });
+
+  // destaca quem esta na vez (dentro do render, senao se perde ao recriar)
+  const tp = state.players[state.turnIndex];
+  if (tp) {
+    const cur = boardEl.querySelector(`.piece[data-pid="${tp.playerId}"]`);
+    if (cur) cur.classList.add('piece-turn');
+  }
+
   highlightMovable();
 }
 
@@ -345,13 +367,7 @@ function renderState() {
   document.getElementById('btn-accuse').disabled = !(isMyTurn && !me.eliminated);
   document.getElementById('btn-endturn').classList.toggle('hidden', !(isMyTurn && state.phase === 'turn' && state.dice !== null));
 
-  // fichas primeiro, depois o destaque (senao o destaque se perde ao recriar)
   renderPieces();
-  document.querySelectorAll('.piece').forEach(el => el.classList.remove('piece-turn'));
-  if (tp) {
-    const piece = document.querySelector(`.piece[data-pid="${tp.playerId}"]`);
-    if (piece) piece.classList.add('piece-turn');
-  }
 
   if (state.winner) showResult(state.winner + ' venceu!', 'Caso resolvido!');
 }
