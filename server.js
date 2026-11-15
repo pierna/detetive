@@ -126,7 +126,7 @@ function runBotTurn(room) {
   const occupied = room.players
     .filter(o => o.playerId !== bot.playerId && o.position && !o.position.room)
     .map(o => o.position);
-  room.currentMovable = board.reachableCells(bot.position, dice, occupied);
+  room.currentMovable = board.reachableCells(bot.position, dice, occupied, false);
   room.phase = 'move';
   io.to(room.code).emit('dice-rolled', { playerId: bot.playerId, dice, movableCells: room.currentMovable });
 
@@ -449,7 +449,7 @@ io.on('connection', (socket) => {
     const occupied = room.players
       .filter(o => o.playerId !== playerId && o.position && !o.position.room)
       .map(o => o.position);
-    room.currentMovable = board.reachableCells(p.position, dice, occupied);
+    room.currentMovable = board.reachableCells(p.position, dice, occupied, false);
     room.phase = 'move';
     io.to(room.code).emit('dice-rolled', {
       playerId, dice,

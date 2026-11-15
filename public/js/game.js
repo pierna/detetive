@@ -47,6 +47,7 @@ function wireSocket(sock) {
     renderCards();
     renderState();
     document.getElementById('modal-result').classList.add('hidden');
+    avisarVez(state);
   });
 
   sock.on('disconnect', () => {
@@ -112,6 +113,8 @@ function wireSocket(sock) {
     document.getElementById('btn-suggest').classList.add('hidden');
     canSuggestNow = false;
     renderState();
+
+    avisarVez(s);
   });
 
   sock.on('suggestion-result', (r) => {
@@ -434,6 +437,19 @@ function renderDice(n) {
       `<i class="${dots.includes(i) ? '' : 'off'}"></i>`).join('') + '</span>';
 }
 
+// avisa com popup quando chega a vez do jogador
+function avisarVez(s) {
+  if (!s) return;
+  const tp = s.players[s.turnIndex];
+  const eu = s.players.find(p => p.playerId === playerId);
+  const souEu = tp && tp.playerId === playerId;
+  const eliminado = eu && eu.eliminated;
+  const jaEmSala = souEu && eu.position && eu.position.room;
+  if (souEu && !eliminado && s.phase === 'turn' && s.dice === null && !jaEmSala) {
+    document.getElementById('modal-your-turn').classList.remove('hidden');
+  }
+}
+
 // ---------- revelacao da refutacao ----------
 let revealCard = null;
 
@@ -483,6 +499,11 @@ function showReveal(d) {
   }
   document.getElementById('modal-reveal').classList.remove('hidden');
 }
+
+document.getElementById('btn-your-turn-ok').addEventListener('click', () => {
+  document.getElementById('modal-your-turn').classList.add('hidden');
+  socket.emit('roll-dice', { code, playerId });
+});
 
 document.getElementById('btn-reveal-ok').addEventListener('click', () => {
   document.getElementById('modal-reveal').classList.add('hidden');

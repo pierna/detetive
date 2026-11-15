@@ -858,3 +858,20 @@ body { display: flex; align-items: center; justify-content: center; overflow: au
   opacity: .85;
   text-shadow: 0 2px 8px #000a;
 }
+
+/* popup de sua vez */
+.turn-popup { text-align: center; }
+.turn-popup-icon {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 6px;
+  animation: diceShake 1.6s ease-in-out infinite;
+}
+@keyframes diceShake {
+  0%, 70%, 100% { transform: rotate(0deg); }
+  75% { transform: rotate(-12deg); }
+  80% { transform: rotate(12deg); }
+  85% { transform: rotate(-8deg); }
+  90% { transform: rotate(8deg); }
+}
+.turn-popup h3 { font-size: 24px; margin-bottom: 4px; }
