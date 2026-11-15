@@ -448,6 +448,7 @@ function avisarVez(s) {
   const jaEmSala = souEu && eu.position && eu.position.room;
   if (souEu && !eliminado && s.phase === 'turn' && s.dice === null && !jaEmSala) {
     document.getElementById('modal-your-turn').classList.remove('hidden');
+    document.getElementById('btn-your-turn-ok').disabled = false;
   }
 }
 
@@ -503,7 +504,12 @@ function showReveal(d) {
 
 document.getElementById('btn-your-turn-ok').addEventListener('click', () => {
   document.getElementById('modal-your-turn').classList.add('hidden');
-  socket.emit('roll-dice', { code, playerId });
+  // bloqueia os dois botoes na hora, sem esperar a resposta do servidor
+  document.getElementById('btn-roll').disabled = true;
+  document.getElementById('btn-your-turn-ok').disabled = true;
+  socket.emit('roll-dice', { code, playerId }, () => {
+    document.getElementById('btn-your-turn-ok').disabled = false;
+  });
 });
 
 document.getElementById('btn-reveal-ok').addEventListener('click', () => {
@@ -523,7 +529,11 @@ document.getElementById('btn-reveal-mark').addEventListener('click', () => {
 
 // ---------- dado ----------
 document.getElementById('btn-roll').addEventListener('click', () => {
-  socket.emit('roll-dice', { code, playerId });
+  document.getElementById('btn-roll').disabled = true;
+  socket.emit('roll-dice', { code, playerId }, (res) => {
+    // se o servidor recusar, devolve o botao
+    if (res && res.error) document.getElementById('btn-roll').disabled = false;
+  });
 });
 
 // ---------- palpite ----------
