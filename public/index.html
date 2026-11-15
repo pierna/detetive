@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Detetive - Multiplayer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="index-body">
+  <div class="menu-container">
+    <h1 class="logo">DETECTIVE</h1>
+    <div class="logo-ornament">— ❦ —</div>
+    <p class="subtitle">Um jogo de dedução para 3 a 6 jogadores</p>
+
+    <button id="btn-create" class="btn btn-primary btn-big">Criar Sala</button>
+
+    <div class="divider">ou</div>
+
+    <div class="join-area">
+      <input id="input-code" class="input" type="text" maxlength="4" placeholder="CODIGO" autocomplete="off">
+      <input id="input-name" class="input" type="text" maxlength="12" placeholder="Seu nome" autocomplete="off">
+      <button id="btn-join" class="btn btn-secondary btn-big">Entrar</button>
+    </div>
+
+    <div id="error-msg" class="error hidden"></div>
+
+    <button id="btn-howto" class="btn btn-small btn-howto">Como Jogar</button>
+  </div>
+
+  <div id="modal-howto" class="modal hidden">
+    <div class="modal-content modal-wide">
+      <h3>Como Jogar</h3>
+      <div class="howto">
+        <p><b>Objetivo:</b> descobrir quem cometeu o crime, com qual arma e em qual sala.</p>
+        <p><b>1. Cartas:</b> no inicio, 3 cartas (um suspeito, uma arma e uma sala) vao para o envelope secreto. O resto e distribuido entre os jogadores — o que voce recebe PROVA que essas pessoas/armas/salas NAO sao as do crime.</p>
+        <p><b>2. Seu turno:</b> role o dado e mova sua peca pelo corredor (casas destacadas). Ao entrar numa sala, voce pode dar um PALPITE sobre quem e com qual arma cometeu o crime naquela sala.</p>
+        <p><b>3. Refutacao:</b> os outros jogadores, em ordem, tentam desmentir seu palpite mostrando uma das cartas em maos (em segredo, so voce ve). Se ninguem puder, seu palpite pode estar certo!</p>
+        <p><b>4. Anotacoes:</b> use o Caderno para marcar o que ja sabe: quem NAO tem certas cartas, e o que ja foi descartado.</p>
+        <p><b>5. Acusacao:</b> quando tiver certeza, faca a ACUSACAO final (suspeito + arma + sala). Acertou: venceu. Errou: continua jogando mas nao pode mais acusar.</p>
+        <p class="howto-tip"><b>Dica:</b> mova para corredor encerra sua vez automaticamente. Caido numa sala, escolha entre palpitar ou passar a vez.</p>
+      </div>
+      <div class="modal-buttons">
+        <button id="btn-howto-close" class="btn btn-primary">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

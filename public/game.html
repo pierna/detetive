@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Detetive - Jogo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="game-body">
+  <div class="game-container">
+    <div class="game-main">
+      <div class="board-wrap">
+        <div id="board" class="board"></div>
+      </div>
+
+      <div class="sidebar">
+        <div class="turn-info">
+          <div>Turno de:</div>
+          <div id="current-turn" class="turn-name">--</div>
+          <div id="dice" class="dice">?</div>
+        </div>
+
+        <div id="action-buttons">
+          <button id="btn-roll" class="btn btn-primary btn-big" disabled>Rolar Dado</button>
+          <button id="btn-suggest" class="btn btn-secondary btn-big hidden">Palpitar</button>
+          <button id="btn-accuse" class="btn btn-danger btn-big">Acusar</button>
+          <button id="btn-endturn" class="btn btn-big hidden">Passar Vez</button>
+        </div>
+
+        <div class="mini-tools">
+          <button id="btn-notebook" class="btn btn-small">Caderno</button>
+          <button id="btn-menu" class="btn btn-small">Menu</button>
+        </div>
+
+        <div class="log-section">
+          <h4>Acontecimentos</h4>
+          <ul id="log"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="out-banner" class="out-banner hidden">
+      Você errou a acusação — não pode mais acusar, mas ainda vê suas cartas.
+    </div>
+
+    <!-- mao de cartas -->
+    <div class="hand-bar">
+      <div class="hand-label">Suas cartas <b id="card-count">0</b></div>
+      <div id="my-cards" class="hand"></div>
+    </div>
+  </div>
+
+  <!-- caderno: painel lateral deslizante -->
+  <div id="notebook-drawer" class="nb-drawer">
+    <div class="nb-head">
+      <span>Caderno de Anotações</span>
+      <button id="btn-nb-close" class="nb-close">×</button>
+    </div>
+    <div class="nb-legend">
+      <span><i class="lg lg-none"></i> ?</span>
+      <span><i class="lg lg-x"></i> Descartado</span>
+      <span><i class="lg lg-q"></i> Dúvida</span>
+    </div>
+    <div class="nb-body">
+      <div class="nb-col">
+        <h5>Suspeitos</h5>
+        <div class="nb-items" id="nb-suspeitos"></div>
+      </div>
+      <div class="nb-col">
+        <h5>Armas</h5>
+        <div class="nb-items" id="nb-armas"></div>
+      </div>
+      <div class="nb-col">
+        <h5>Salas</h5>
+        <div class="nb-items" id="nb-salas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modais -->
+  <div id="modal-suggest" class="modal hidden">
+    <div class="modal-content">
+      <h3>Palpite</h3>
+      <p class="modal-hint">Quem e com qual arma, nesta sala: <b id="suggest-room-name"></b></p>
+      <div class="modal-row"><label>Suspeito:</label><select id="sel-suspect"></select></div>
+      <div class="modal-row"><label>Arma:</label><select id="sel-weapon"></select></div>
+      <div class="modal-buttons">
+        <button id="btn-suggest-cancel" class="btn">Cancelar</button>
+        <button id="btn-suggest-send" class="btn btn-primary">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-accuse" class="modal hidden">
+    <div class="modal-content">
+      <h3>Acusacao Final</h3>
+      <p class="modal-hint">Se errar, voce esta fora das acusacoes!</p>
+      <div class="modal-row"><label>Suspeito:</label><select id="asel-suspect"></select></div>
+      <div class="modal-row"><label>Arma:</label><select id="asel-weapon"></select></div>
+      <div class="modal-row"><label>Sala:</label><select id="asel-room"></select></div>
+      <div class="modal-buttons">
+        <button id="btn-accuse-cancel" class="btn">Cancelar</button>
+        <button id="btn-accuse-send" class="btn btn-danger">Acusar!</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-refute" class="modal hidden">
+    <div class="modal-content">
+      <h3>Refutacao</h3>
+      <p id="refute-text" class="modal-hint"></p>
+      <div id="refute-cards" class="refute-cards"></div>
+      <div class="modal-buttons">
+        <button id="btn-refute-none" class="btn">Nao tenho</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-reveal" class="modal hidden">
+    <div class="modal-content reveal-content">
+      <h3 id="reveal-title">Refutação</h3>
+      <p id="reveal-text" class="modal-hint"></p>
+      <div class="reveal-cards">
+        <div id="reveal-card" class="playing-card reveal-card"></div>
+      </div>
+      <div class="modal-buttons">
+        <button id="btn-reveal-mark" class="btn btn-secondary hidden">Marcar no caderno</button>
+        <button id="btn-reveal-ok" class="btn btn-primary">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-result" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="result-title"></h3>
+      <p id="result-text" class="modal-hint"></p>
+      <div class="modal-buttons">
+        <button id="btn-result-close" class="btn">Fechar</button>
+        <button id="btn-new-game" class="btn btn-primary">Nova Partida</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-menu" class="modal hidden">
+    <div class="modal-content">
+      <h3>Menu</h3>
+      <p class="modal-hint">Sala: <b id="menu-room-code"></b></p>
+      <div class="modal-buttons menu-buttons">
+        <button id="btn-menu-reconnect" class="btn btn-primary">Reconectar</button>
+        <button id="btn-menu-leave" class="btn btn-danger">Sair da Sala</button>
+      </div>
+      <div class="modal-buttons">
+        <button id="btn-menu-close" class="btn">Voltar ao Jogo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
