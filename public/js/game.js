@@ -160,14 +160,34 @@ function wireSocket(sock) {
     document.getElementById('modal-refute').classList.remove('hidden');
   });
 
+  // contagem para a volta automatica ao lobby
+  let contagemTimer = null;
+  function iniciarContagem() {
+    const el = document.getElementById('result-countdown');
+    if (!el) return;
+    let seg = 12;
+    el.classList.remove('hidden');
+    el.textContent = 'Nova partida em ' + seg + 's...';
+    if (contagemTimer) clearInterval(contagemTimer);
+    contagemTimer = setInterval(() => {
+      seg--;
+      if (seg <= 0) {
+        clearInterval(contagemTimer);
+        el.textContent = 'Voltando...';
+        return;
+      }
+      el.textContent = 'Nova partida em ' + seg + 's...';
+    }, 1000);
+  }
+
   sock.on('accusation-result', (r) => {
     if (r.correct && r.lastStanding) {
       addLog(`${r.player} foi o unico que restou e venceu!`, 'log-win');
       showResult(`${r.player} venceu!`,
-        `Todos os outros erraram a acusacao. O caso era: ${r.solution.suspeito.name}, com ${r.solution.arma.name}, em ${r.solution.sala.name}.`);
+        `Todos os outros erraram a acusacao. O caso era: ${r.solution.suspeito.name}, com ${r.solution.arma.name}, em ${r.solution.sala.name}.`, true);
     } else if (r.correct) {
       addLog(`${r.player} acusou corretamente e VENCEU!`, 'log-win');
-      showResult(`${r.player} venceu!`, 'Caso resolvido!');
+      showResult(`${r.player} venceu!`, 'Caso resolvido!', true);
     } else {
       addLog(`${r.player} errou a acusacao e foi eliminado.`, 'log-fail');
       showResult('Acusacao errada!', `${r.player} errou e nao pode mais acusar.`);
@@ -182,8 +202,8 @@ function wireSocket(sock) {
   sock.on('game-over', (r) => {
     const sol = r.solution;
     addLog('Todos erraram. O caso fica em aberto.', 'log-fail');
-    showResult('Ninguem acertou!', 
-      `Era ${sol.suspeito.name}, com ${sol.arma.name}, em ${sol.sala.name}.`);
+    showResult('Ninguem acertou!',
+      `Era ${sol.suspeito.name}, com ${sol.arma.name}, em ${sol.sala.name}.`, true);
   });
 }
 
@@ -612,10 +632,13 @@ function fillSelect(selId, items) {
   });
 }
 
-function showResult(title, text) {
+function showResult(title, text, fimDeJogo) {
   document.getElementById('result-title').textContent = title;
   document.getElementById('result-text').textContent = text;
   document.getElementById('modal-result').classList.remove('hidden');
+  const el = document.getElementById('result-countdown');
+  if (el) el.classList.toggle('hidden', !fimDeJogo);
+  if (fimDeJogo) iniciarContagem();
 }
 
 document.getElementById('btn-result-close').addEventListener('click', () => {

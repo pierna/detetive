@@ -102,6 +102,7 @@ function runBotTurn(room) {
     if (correct) {
       room.winner = bot.name;
       room.phase = 'win';
+      agendarVoltaAoLobby(room);
       return;
     }
     bot.eliminated = true;
@@ -111,6 +112,7 @@ function runBotTurn(room) {
       room.winner = null;
       room.phase = 'win';
       io.to(room.code).emit('game-over', { solution: room.solution });
+      agendarVoltaAoLobby(room);
       return;
     }
     game.nextTurn(room);
@@ -175,12 +177,24 @@ function runBotTurn(room) {
   }, 1000);
 }
 
+// depois do fim, todos voltam ao lobby automaticamente para uma nova partida
+function agendarVoltaAoLobby(room, segundos = 12) {
+  if (room.lobbyTimer) clearTimeout(room.lobbyTimer);
+  room.lobbyTimer = setTimeout(() => {
+    if (room.phase !== 'win') return;
+    game.resetToLobby(room);
+    io.to(room.code).emit('back-to-lobby', { automatico: true });
+    broadcastRoomState(room);
+  }, segundos * 1000);
+}
+
 // se so sobrou um jogador vivo, ele vence por desistencia dos demais
 function checkLastStanding(room) {
   const alive = room.players.filter(p => !p.eliminated);
   if (alive.length === 1 && room.players.length > 1) {
     room.winner = alive[0].name;
     room.phase = 'win';
+    agendarVoltaAoLobby(room);
     io.to(room.code).emit('accusation-result', {
       player: alive[0].name, correct: true, winner: alive[0].name,
       solution: room.solution, lastStanding: true
@@ -537,6 +551,7 @@ io.on('connection', (socket) => {
     if (correct) {
       room.winner = p.name;
       room.phase = 'win';
+      agendarVoltaAoLobby(room);
       io.to(room.code).emit('accusation-result', {
         player: p.name, suspect, weapon, room: roomId,
         correct: true, winner: p.name,
