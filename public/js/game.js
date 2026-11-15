@@ -317,8 +317,9 @@ function renderPieces() {
     if (!vistos.has(el.dataset.pid)) el.remove();
   });
 
-  // destaca quem esta na vez (dentro do render, senao se perde ao recriar)
+  // destaca SO quem esta na vez (limpa os anteriores, senao todos ficam piscando)
   const tp = state.players[state.turnIndex];
+  boardEl.querySelectorAll('.piece').forEach(el => el.classList.remove('piece-turn'));
   if (tp) {
     const cur = boardEl.querySelector(`.piece[data-pid="${tp.playerId}"]`);
     if (cur) cur.classList.add('piece-turn');

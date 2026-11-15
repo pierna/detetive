@@ -99,9 +99,14 @@ function reachableCells(from, steps, occupiedCells, exactOnly = true) {
     frontier = next;
   }
 
-  const alvo = exactOnly ? steps : null;
+  // Regra: corredor so vale na distancia exata do dado (evita poluir o tabuleiro),
+  // mas uma SALA vale em qualquer distancia ate o dado (entrar nela encerra o movimento).
   return [...porDistancia.entries()]
-    .filter(([k, d]) => k !== key(start) && (alvo === null || d === alvo))
+    .filter(([k, d]) => {
+      if (k === key(start)) return false;
+      if (k.startsWith('r:')) return d <= steps;   // sala: qualquer distancia
+      return exactOnly ? d === steps : d <= steps; // corredor: exata (ou ate N)
+    })
     .map(([k]) => {
       if (k.startsWith('r:')) return { room: k.slice(2) };
       const [x, y] = k.slice(2).split(',').map(Number);
