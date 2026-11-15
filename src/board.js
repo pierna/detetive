@@ -68,40 +68,45 @@ const SECRET_PASSAGES = [
 // Regras: anda por corredores; entra em sala apenas por porta (a porta custa 1 passo);
 // sair de sala sai pela porta (custa 1 passo). Passagem secreta custa 1 passo.
 // Não pode atravessar (parar em) célula ocupada por outro jogador (mas pode atravessar corredor? clássico: não pode parar; simplificação: não pode parar nem atravessar ficha).
-function reachableCells(from, steps, occupiedCells) {
+// Retorna as casas onde o peao pode PARAR. Por padrao so as de distancia exata
+// (regra classica: anda o numero tirado), para nao poluir o tabuleiro com o caminho.
+function reachableCells(from, steps, occupiedCells, exactOnly = true) {
   const start = typeof from === 'string' ? { room: from } : { ...from };
   const occupied = new Set(occupiedCells.map(c => `${c.x},${c.y}`));
   const key = p => p.room ? `r:${p.room}` : `c:${p.x},${p.y}`;
   const visited = new Set([key(start)]);
   let frontier = [start];
-  const results = new Set();
+  const porDistancia = new Map(); // chave -> distancia em que foi alcancada
 
-  for (let step = 0; step < steps; step++) {
+  for (let step = 1; step <= steps; step++) {
     const next = [];
     for (const p of frontier) {
-      const neighbors = neighborsOf(p);
-      for (const n of neighbors) {
+      for (const n of neighborsOf(p)) {
         const k = key(n);
         if (visited.has(k)) continue;
         visited.add(k);
         const nRoom = n.room || inRoom(n.x, n.y);
         if (nRoom) {
-          results.add(`r:${nRoom}`); // entrou numa sala: parada possível
+          // entrar numa sala encerra o movimento
+          porDistancia.set(`r:${nRoom}`, step);
         } else {
-          if (occupied.has(`${n.x},${n.y}`)) continue; // não pode parar nem atravessar ficha
+          if (occupied.has(`${n.x},${n.y}`)) continue; // nao pode parar nem atravessar ficha
           next.push(n);
-          results.add(k);
+          porDistancia.set(k, step);
         }
       }
     }
     frontier = next;
   }
-  // converte para objetos
-  return [...results].filter(k => k !== key(start)).map(k => {
-    if (k.startsWith('r:')) return { room: k.slice(2) };
-    const [x, y] = k.slice(2).split(',').map(Number);
-    return { x, y };
-  });
+
+  const alvo = exactOnly ? steps : null;
+  return [...porDistancia.entries()]
+    .filter(([k, d]) => k !== key(start) && (alvo === null || d === alvo))
+    .map(([k]) => {
+      if (k.startsWith('r:')) return { room: k.slice(2) };
+      const [x, y] = k.slice(2).split(',').map(Number);
+      return { x, y };
+    });
 }
 
 function neighborsOf(p) {

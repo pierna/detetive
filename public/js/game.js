@@ -88,6 +88,12 @@ function wireSocket(sock) {
     renderState();
   });
 
+  sock.on('no-moves', (d) => {
+    if (d.playerId !== playerId) return;
+    addLog('Nenhuma casa alcancavel com esse dado. Passe a vez.');
+    document.getElementById('btn-endturn').classList.remove('hidden');
+  });
+
   sock.on('can-suggest', (d) => {
     if (d.playerId === playerId) {
       canSuggestNow = true;

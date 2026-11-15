@@ -447,6 +447,10 @@ io.on('connection', (socket) => {
       playerId, dice,
       movableCells: room.currentMovable
     });
+    // sem casa valida: o jogador so pode passar a vez
+    if (!room.currentMovable.length) {
+      io.to(room.code).emit('no-moves', { playerId });
+    }
     cb && cb({ ok: true });
   });
 
